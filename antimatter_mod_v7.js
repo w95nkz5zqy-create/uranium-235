@@ -8,7 +8,8 @@ var antimatterCategories = [
     "antimatter_gases",
     "antimatter_solids",
     "antimatter_energy",
-    "antimatter_fission"
+    "antimatter_fission",
+    "antimatter_machines"
 ];
 
 if (!elements.categories) {
@@ -627,3 +628,48 @@ elements.anti_barium_141_solid = {
 };
 
 console.log("Antimatter mod v4 loaded - all antimatter annihilates with all regular matter!");
+
+// ANTIMATTER MACHINES CATEGORY
+elements.anti_moderator = {
+    color: ["#2c2c2c", "#373737", "#212121", "#3f3f3f"],
+    behavior: behaviors.WALL,
+    tick: antimatterTick,
+    reactions: {
+        "antineutron": { "elem1": "anti_moderator", "elem2": "anti_slow_neutron", "chance": 0.7 }
+    },
+    category: "antimatter_machines",
+    state: "solid",
+    density: 1850,
+    hardness: 0.6,
+    temp: 20,
+    tempHigh: 3000,
+    stateHigh: "anti_molten_moderator"
+};
+
+elements.anti_molten_moderator = {
+    color: ["#0099ff", "#0088ee", "#00aaff"],
+    behavior: behaviors.MOLTEN,
+    tick: antimatterTick,
+    category: "antimatter_machines",
+    state: "liquid",
+    density: 1700,
+    temp: 3100,
+    tempLow: 3000,
+    stateLow: "anti_moderator"
+};
+
+elements.anti_slow_neutron = {
+    color: ["#ff6600", "#ff7700", "#ff5500"],
+    behavior: [
+        "XX|M2%50|XX",
+        "M2%50|XX|M2%50",
+        "XX|M2%50|XX",
+    ],
+    tick: antimatterTick,
+    category: "antimatter_energy",
+    state: "gas",
+    density: 0,
+    temp: 20
+};
+
+console.log("Antimatter machines category added!");
