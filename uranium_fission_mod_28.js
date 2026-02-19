@@ -1,0 +1,219 @@
+// Uranium-235 Fission Mod v27 - TWO types: mu-235 and u-235
+
+var fissionCategory = "fission";
+
+if (!elements.categories) {
+    elements.categories = [];
+}
+if (!elements.categories.includes(fissionCategory)) {
+    elements.categories.push(fissionCategory);
+}
+
+// MU-235 (Modified Uranium-235) - High melting point, 4 neutrons
+elements.mu_235 = {
+    color: ["#e0e0e0", "#d0d0d0", "#c8c8c8", "#b8b8b8"],
+    behavior: behaviors.WALL,
+    tick: function(pixel) {
+        // Max out temperature at 10000°C
+        if (pixel.temp > 10000) {
+            pixel.temp = 10000;
+        }
+        
+        // Check adjacent pixels for neutrons
+        for (var dx = -1; dx <= 1; dx++) {
+            for (var dy = -1; dy <= 1; dy++) {
+                if (dx === 0 && dy === 0) continue;
+                var nx = pixel.x + dx;
+                var ny = pixel.y + dy;
+                
+                if (pixelMap[nx] && pixelMap[nx][ny]) {
+                    var nearPixel = pixelMap[nx][ny];
+                    
+                    if (nearPixel && nearPixel.element === "neutron") {
+                        deletePixel(nx, ny);
+                        
+                        // Create 4 neutrons
+                        for (var i = 0; i < 4; i++) {
+                            var angle = Math.random() * Math.PI * 2;
+                            var dist = 2 + Math.random() * 2;
+                            var spawnX = Math.round(pixel.x + Math.cos(angle) * dist);
+                            var spawnY = Math.round(pixel.y + Math.sin(angle) * dist);
+                            
+                            if (isEmpty(spawnX, spawnY)) {
+                                createPixel("neutron", spawnX, spawnY);
+                            }
+                        }
+                        
+                        pixel.temp += 800;  // 800°C per fission!
+                        return;
+                    }
+                }
+            }
+        }
+    },
+    category: fissionCategory,
+    state: "solid",
+    density: 19100,
+    hardness: 0.6,
+    conduct: 0.27,
+    temp: 20,
+    tempHigh: 10590,  // High melting point
+    stateHigh: "molten_mu_235",
+    hidden: false
+};
+
+elements.molten_mu_235 = {
+    color: ["#ff8c00", "#ffa500", "#ff7f00", "#ffaa00"],
+    behavior: behaviors.MOLTEN,
+    tick: function(pixel) {
+        // Max out temperature at 10000°C
+        if (pixel.temp > 10000) {
+            pixel.temp = 10000;
+        }
+    },
+    category: fissionCategory,
+    state: "liquid",
+    density: 17300,
+    conduct: 0.3,
+    temp: 10600,
+    tempLow: 10590,
+    stateLow: "mu_235",
+    hidden: false
+};
+
+// U-235 (Regular Uranium-235) - Normal melting point, 3 neutrons
+elements.u_235 = {
+    color: ["#c0c0c0", "#a8a8a8", "#b5b5b5", "#9d9d9d"],
+    behavior: behaviors.WALL,
+    tick: function(pixel) {
+        // Check adjacent pixels for neutrons
+        for (var dx = -1; dx <= 1; dx++) {
+            for (var dy = -1; dy <= 1; dy++) {
+                if (dx === 0 && dy === 0) continue;
+                var nx = pixel.x + dx;
+                var ny = pixel.y + dy;
+                
+                if (pixelMap[nx] && pixelMap[nx][ny]) {
+                    var nearPixel = pixelMap[nx][ny];
+                    
+                    if (nearPixel && nearPixel.element === "neutron") {
+                        deletePixel(nx, ny);
+                        
+                        // Create 3 neutrons
+                        for (var i = 0; i < 3; i++) {
+                            var angle = Math.random() * Math.PI * 2;
+                            var dist = 2 + Math.random() * 2;
+                            var spawnX = Math.round(pixel.x + Math.cos(angle) * dist);
+                            var spawnY = Math.round(pixel.y + Math.sin(angle) * dist);
+                            
+                            if (isEmpty(spawnX, spawnY)) {
+                                createPixel("neutron", spawnX, spawnY);
+                            }
+                        }
+                        
+                        pixel.temp += 300;
+                        return;
+                    }
+                }
+            }
+        }
+    },
+    category: fissionCategory,
+    state: "solid",
+    density: 19100,
+    hardness: 0.6,
+    conduct: 0.27,
+    temp: 20,
+    tempHigh: 3500,  // Lower melting point
+    stateHigh: "molten_u_235",
+    hidden: false
+};
+
+elements.molten_u_235 = {
+    color: ["#ff8c00", "#ffa500", "#ff7f00", "#ffaa00"],
+    behavior: behaviors.MOLTEN,
+    category: fissionCategory,
+    state: "liquid",
+    density: 17300,
+    conduct: 0.3,
+    temp: 3600,
+    tempLow: 3500,
+    stateLow: "u_235",
+    hidden: false
+};
+
+// Moderator - Light grey, slows neutrons once
+elements.moderator = {
+    color: ["#d3d3d3", "#c8c8c8", "#dedede", "#c0c0c0"],
+    behavior: behaviors.WALL,
+    tick: function(pixel) {
+        // Check for neutrons nearby
+        for (var dx = -1; dx <= 1; dx++) {
+            for (var dy = -1; dy <= 1; dy++) {
+                if (dx === 0 && dy === 0) continue;
+                var nx = pixel.x + dx;
+                var ny = pixel.y + dy;
+                
+                if (pixelMap[nx] && pixelMap[nx][ny]) {
+                    var neutron = pixelMap[nx][ny];
+                    
+                    if (neutron && neutron.element === "neutron") {
+                        // Check if already slowed
+                        if (!neutron.slowed) {
+                            neutron.slowed = true;
+                        }
+                    }
+                }
+            }
+        }
+    },
+    category: fissionCategory,
+    state: "solid",
+    density: 1850,
+    hardness: 0.6,
+    temp: 20,
+    tempHigh: 3000,
+    stateHigh: "molten_moderator",
+    immobile: true
+};
+
+elements.molten_moderator = {
+    color: ["#ff6600", "#ff7700", "#ff5500"],
+    behavior: behaviors.MOLTEN,
+    category: fissionCategory,
+    state: "liquid",
+    density: 1700,
+    temp: 3100,
+    tempLow: 3000,
+    stateLow: "moderator"
+};
+
+// Modify neutron behavior to respect slowing
+if (elements.neutron) {
+    var originalNeutronTick = elements.neutron.tick;
+    
+    elements.neutron.tick = function(pixel) {
+        // If slowed, skip some ticks to make it slower
+        if (pixel.slowed) {
+            if (!pixel.skipTicks) {
+                pixel.skipTicks = 0;
+            }
+            pixel.skipTicks++;
+            
+            // Skip every other tick (moves at half speed)
+            if (pixel.skipTicks % 2 === 0) {
+                return;
+            }
+        }
+        
+        // Call original tick if it exists
+        if (originalNeutronTick) {
+            originalNeutronTick(pixel);
+        }
+    };
+}
+
+console.log('Uranium Fission v27 loaded!');
+console.log('mu-235: melts at 10590°C, maxes at 10000°C, creates 4 neutrons, 800°C per fission');
+console.log('u-235: melts at 3500°C, creates 3 neutrons, 300°C per fission');
+console.log('moderator: slows neutrons once');
