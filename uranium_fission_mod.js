@@ -3,15 +3,18 @@
 
 var fissionCategory = "fission";
 
+if (!elements.categories) {
+    elements.categories = [];
+}
 if (!elements.categories.includes(fissionCategory)) {
     elements.categories.push(fissionCategory);
 }
 
 elements.uranium_235 = {
-    color: "#3aff3a",
-    behavior: behaviors.POWDER,
+    color: ["#c0c0c0", "#a8a8a8", "#b5b5b5", "#9d9d9d"],
+    behavior: behaviors.WALL,
     reactions: {
-        "neutron": { "elem1": "uranium_235", "elem2": ["neutron", "neutron", "energy"], "chance": 0.8 }
+        "neutron": { "elem1": "uranium_235", "elem2": ["neutron", "neutron", "energy"], "chance": 0.8, "temp1": 200 }
     },
     category: fissionCategory,
     state: "solid",
@@ -25,15 +28,14 @@ elements.uranium_235 = {
     burn: 1,
     burnTime: 500,
     burnInto: "rad_steam",
-    breakInto: "uranium_dust",
     hidden: false
 };
 
 elements.molten_uranium_235 = {
-    color: "#7fff3a",
+    color: ["#ff8c00", "#ffa500", "#ff7f00", "#ffaa00"],
     behavior: behaviors.MOLTEN,
     reactions: {
-        "neutron": { "elem1": "molten_uranium_235", "elem2": ["neutron", "neutron", "energy"], "chance": 0.9 }
+        "neutron": { "elem1": "molten_uranium_235", "elem2": ["neutron", "neutron", "energy"], "chance": 0.9, "temp1": 250 }
     },
     category: fissionCategory,
     state: "liquid",
@@ -49,7 +51,7 @@ elements.molten_uranium_235 = {
 };
 
 elements.uranium_236 = {
-    color: "#2aee2a",
+    color: "#a8b5a8",
     behavior: behaviors.POWDER,
     tick: function(pixel) {
         if (Math.random() < 0.15) {
@@ -71,8 +73,23 @@ elements.uranium_236 = {
                 }
             }
             
-            // Release energy
-            pixel.temp += 500;
+            // Release energy and heat
+            pixel.temp += 800;
+            
+            // Heat surrounding pixels
+            for (var dx = -2; dx <= 2; dx++) {
+                for (var dy = -2; dy <= 2; dy++) {
+                    if (dx === 0 && dy === 0) continue;
+                    var nx = pixel.x + dx;
+                    var ny = pixel.y + dy;
+                    if (!isEmpty(nx, ny, true)) {
+                        var nearPixel = pixelMap[nx][ny];
+                        if (nearPixel && nearPixel.temp !== undefined) {
+                            nearPixel.temp += 100;
+                        }
+                    }
+                }
+            }
             
             // Create explosion effect
             if (Math.random() < 0.3) {
@@ -104,7 +121,7 @@ elements.uranium_236 = {
 };
 
 elements.molten_uranium_236 = {
-    color: "#6fee2a",
+    color: ["#ff6600", "#ff8800", "#ff7700", "#ff9900"],
     behavior: behaviors.MOLTEN,
     tick: function(pixel) {
         if (Math.random() < 0.2) {
@@ -124,7 +141,22 @@ elements.molten_uranium_236 = {
                 }
             }
             
-            pixel.temp += 600;
+            pixel.temp += 900;
+            
+            // Heat surrounding pixels
+            for (var dx = -2; dx <= 2; dx++) {
+                for (var dy = -2; dy <= 2; dy++) {
+                    if (dx === 0 && dy === 0) continue;
+                    var nx = pixel.x + dx;
+                    var ny = pixel.y + dy;
+                    if (!isEmpty(nx, ny, true)) {
+                        var nearPixel = pixelMap[nx][ny];
+                        if (nearPixel && nearPixel.temp !== undefined) {
+                            nearPixel.temp += 150;
+                        }
+                    }
+                }
+            }
             
             if (Math.random() < 0.4) {
                 for (var dx = -1; dx <= 1; dx++) {
